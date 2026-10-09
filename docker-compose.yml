@@ -1,0 +1,30 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: commerce
+      POSTGRES_USER: commerce
+      POSTGRES_PASSWORD: commerce
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U commerce -d commerce"]
+      interval: 3s
+      timeout: 3s
+      retries: 10
+    volumes:
+      - commerce-data:/var/lib/postgresql/data
+      - ./migrations:/docker-entrypoint-initdb.d:ro
+
+  app:
+    build: .
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      PORT: "8080"
+      DATABASE_URL: postgres://commerce:commerce@postgres:5432/commerce?sslmode=disable
+      STATIC_DIR: /app/web/dist
+    ports:
+      - "8080:8080"
+
+volumes:
+  commerce-data:
